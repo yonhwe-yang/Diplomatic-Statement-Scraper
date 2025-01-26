@@ -1,8 +1,8 @@
 import pandas as pd
 
 # 读取两个 Excel 文件
-excel1 = pd.read_excel(r"C:\Users\86159\Desktop\外交语料\外交部\缺少链接.xlsx")  # 这是要更新的文件（目标文件）
-excel2 = pd.read_excel(r"C:\Users\86159\Desktop\外交语料\外交部\valid_pages.xlsx")  # 这是提供标题和日期的文件（源文件）
+excel1 = pd.read_excel("")  # 这是要更新的文件（目标文件）
+excel2 = pd.read_excel("")  # 这是提供标题和日期的文件（源文件）
 
 # 假设两个文件中都有 '链接', '标题', '日期' 列
 # 遍历 excel1 中的每一行，根据 '链接' 查找 excel2 中对应的 '标题' 和 '日期'，并更新
