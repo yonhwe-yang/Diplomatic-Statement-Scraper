@@ -5,7 +5,7 @@ from openpyxl import Workbook, load_workbook
 import os
 import time
 
-names = ["林剑", "毛宁", "汪文斌", "赵立坚", "耿爽", "陆慷", "华春莹"]
+names = ["林剑", "毛宁", "汪文斌", "赵立坚", "耿爽", "陆慷", "华春莹",'郭嘉昆']
 #处理title
 def process_title(text):
     match=re.match(r"(.+?)（(\d{4})-(\d{2})-(\d{2})）", text)
@@ -109,7 +109,7 @@ def append_to_excel(dialogues, link, title, date, strong_count,output_file="外�
 driver = webdriver.Chrome()
 
 try:
-    for idx in range(1,28):
+    for idx in range(1,5):
         # 打开目标网页
         url = f"https://www.mfa.gov.cn/web/wjdt_674879/fyrbt_674889/index_{idx}.shtml"
         driver.get(url)
