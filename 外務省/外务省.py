@@ -67,14 +67,12 @@ def parse_conversation_details(conversation_segments: List[str]) -> List[Dict[st
             media_name = extract_media(reporter_info)
             last_topic = topic.strip()  # 更新上一个主题
 
-
-            # Find question after the reporter section to the next sentence-ending
+            # Find question after the reporter section to the next 【 or end of text
             question_start_idx = topic_match.end()
-            question_match = re.search(r'(.+?)。', segment[question_start_idx:])
+            question_match = re.search(r'([\s\S]*?)(?=【|\Z)', segment[question_start_idx:], flags=re.DOTALL)
             if question_match:
                 question_text = question_match.group(1).strip()
                 question_end_idx = question_start_idx + question_match.end()
-
 
                 # Find speaker and response after the question section
                 speaker_match = re.search(r'【([^】]*[^記者])】', segment[question_end_idx:])
@@ -95,15 +93,14 @@ def parse_conversation_details(conversation_segments: List[str]) -> List[Dict[st
 
         else:
             # 如果没有找到新的主题，继承上一个主题
-
             reporter_match = re.match(r'【([^】]*記者[^】]*)】', segment)
             if reporter_match:
                 reporter_info = reporter_match.group(1)
                 media_name = extract_media(reporter_info)
 
-                # Find question after the reporter section to the next sentence-ending
+                # Find question after the reporter section to the next 【 or end of text
                 question_start_idx = reporter_match.end()
-                question_match = re.search(r'(.+?)。', segment[question_start_idx:])
+                question_match = re.search(r'([\s\S]*?)(?=【|\Z)', segment[question_start_idx:], flags=re.DOTALL)
                 if question_match:
                     question_text = question_match.group(1).strip()
                     question_end_idx = question_start_idx + question_match.end()
@@ -114,7 +111,6 @@ def parse_conversation_details(conversation_segments: List[str]) -> List[Dict[st
                         speaker_name = speaker_match.group(1).strip()
                         response_start_idx = question_end_idx + speaker_match.end()
                         response_text = segment[response_start_idx:].strip()  # Remaining text as response
-
 
                         # Compile conversation details
                         conversation = {
@@ -156,7 +152,7 @@ def split_conversation_segments(full_text: str) -> List[str]:
     return conversation_segments
 
 #提取maincontents内容，并做初步处理
-def extract_main_contents(soup):
+def extract_main_contents(cleaned_text):
     q_and_a_text = ""
     extracted_themes = []  # 保存冒頭発言的主题和内容
 
@@ -330,124 +326,124 @@ try:
     url = "https://www.mofa.go.jp/mofaj/press/kaiken/gaisho/index.html"
     driver.get(url)
 
-    # 遍历 XPath 中 a[2] 到 a[12] 的链接
-    for i in range(1, 13):  # a[2] 到 a[12]
-        try:
-            # 动态生成 XPath
-            xpath = f"/html/body/div/main/article/div[2]/div/div/div[2]/div[3]/div/table/tbody/tr[1]/td[2]/a[{i}]"
+    for idx in []:#遍历年份
+        max_i =  if idx ==  else #遍历月份，可根据年份选择月份
+        for i in range(1, max_i + 1):  # a[1] 到 a[max]
+            try:
+                # 动态生成 XPath
+                xpath = f"/html/body/div/main/article/div[2]/div/div/div[2]/div[3]/div/table/tbody/tr[{idx}]/td[2]/a[{i}]"
+                # 等待并定位到链接元素
+                link_element = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, xpath))
+                )
 
-            # 等待并定位到链接元素
-            link_element = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, xpath))
-            )
+                # 获取链接 URL
+                link_url = link_element.get_attribute("href")
 
-            # 获取链接 URL
-            link_url = link_element.get_attribute("href")
+                # 点击进入该链接
+                link_element.click()
 
-            # 点击进入该链接
-            link_element.click()
+                # 使用 XPath 定位到 <div id="pressconf"> 下的所有 dl 元素
+                dl_elements = driver.find_elements(By.XPATH, "//div[@id='pressconf']//dl")
 
-            # 使用 XPath 定位到 <div id="pressconf"> 下的所有 dl 元素
-            dl_elements = driver.find_elements(By.XPATH, "//div[@id='pressconf']//dl")
+                # 过滤出可见的有效 dl 元素
+                valid_dl_elements = [dl for dl in dl_elements if dl.is_displayed()]
 
-            # 过滤出可见的有效 dl 元素
-            valid_dl_elements = [dl for dl in dl_elements if dl.is_displayed()]
+                # 获取有效的 dl 元素数量
+                total_valid_dl = len(valid_dl_elements)
 
-            # 获取有效的 dl 元素数量
-            total_valid_dl = len(valid_dl_elements)
+                # 遍历所有的有效 dl 元素
+                for dl_index in range(1, total_valid_dl + 1):
+                    try:
+                        # 动态定位每个 dl 元素的 dt/a 链接
+                        target_xpath = f"//dl[{dl_index}]/dt/a"
 
-            # 遍历所有的有效 dl 元素
-            for dl_index in range(1, total_valid_dl + 1):
-                try:
-                    # 动态定位每个 dl 元素的 dt/a 链接
-                    target_xpath = f"//dl[{dl_index}]/dt/a"
+                        # 等待并定位到目标链接元素
+                        target_element = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.XPATH, target_xpath))
+                        )
+                        link_url = target_element.get_attribute("href")  #
+                        # 点击目标链接进入目标页面
+                        target_element.click()
 
-                    # 等待并定位到目标链接元素
-                    target_element = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, target_xpath))
-                    )
-                    link_url = target_element.get_attribute("href")  #
-                    # 点击目标链接进入目标页面
-                    target_element.click()
+                        # 等待目标页面加载
+                        time.sleep(3)  # 根据需要调整时间
 
-                    # 等待目标页面加载
-                    time.sleep(3)  # 根据需要调整时间
+                        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "h2")))
 
-                    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "h2")))
+                        # 调用函数提取标题和日期
+                        Combined_Title_And_Date, Converted_Date = extract_title_and_date(driver)
 
-                    # 调用函数提取标题和日期
-                    Combined_Title_And_Date, Converted_Date = extract_title_and_date(driver)
-
-                    # 获取目标页面中的 maincontents 部分
-                    maincontents_element = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.ID, "maincontents"))
-                    )
-
-                    # 使用 JavaScript 删除不需要的部分
-                    driver.execute_script("""
-                        var elements = document.querySelectorAll('.rightalign.other-language, .social-btn-top');
-                        elements.forEach(function(element) {
-                            element.remove();
-                        });
-                    """)
-
-                    # 获取清理后的 maincontents 下的文本
-                    cleaned_text = maincontents_element.text.strip()
-
-                    # 输出清理后的文本内容
-                    q_and_a_text, extracted_themes = extract_main_contents(cleaned_text)
-                    parsed_conversations = parse_conversation_details(split_conversation_segments(q_and_a_text))
-
-                    # 保存冒頭发言到 Excel
-                    for theme in extracted_themes:
-                        append_to_excel(
-                            file_name,
-                            number="",
-                            link=link_url,
-                            title=Combined_Title_And_Date,
-                            date=Converted_Date,
-                            media="",
-                            main_topic="",
-                            sub_topic=theme["主题"],
-                            question="",
-                            speaker=theme["发言人"],
-                            answer=theme["回答"]
+                        # 获取目标页面中的 maincontents 部分
+                        maincontents_element = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.ID, "maincontents"))
                         )
 
-                    # 分割并解析 Q&A 内容
-                    conversation_segments = split_conversation_segments(q_and_a_text)
-                    parsed_conversations = parse_conversation_details(conversation_segments)
+                        # 使用 JavaScript 删除不需要的部分
+                        driver.execute_script("""
+                            var elements = document.querySelectorAll('.rightalign.other-language, .social-btn-top');
+                            elements.forEach(function(element) {
+                                element.remove();
+                            });
+                        """)
 
-                    # 保存 Q&A 对话到 Excel
-                    for conversation in parsed_conversations:
-                        append_to_excel(
-                            file_name,
-                            number="",
-                            link=link_url,
-                            title=Combined_Title_And_Date,
-                            date=Converted_Date,
-                            media=conversation["媒体"],
-                            main_topic="",
-                            sub_topic=conversation["主题"],
-                            question=conversation["提问"],
-                            speaker=conversation["发言人"],
-                            answer=conversation["回答"]
-                        )
-                    # 返回到主页面，准备爬取下一个链接
-                    driver.back()
+                        # 获取清理后的 maincontents 下的文本
+                        cleaned_text = maincontents_element.text.strip()
 
-                    # 等待主页面加载
-                    time.sleep(3)
+                        # 输出清理后的文本内容
+                        q_and_a_text, extracted_themes = extract_main_contents(cleaned_text)
+                        parsed_conversations = parse_conversation_details(split_conversation_segments(q_and_a_text))
 
-                except Exception as e:
-                    print(f"Error processing dl[{dl_index}]: {e}")
-                    break  # 如果某个链接无法访问，则跳出循环
-            driver.get(url)
+                        # 保存冒頭发言到 Excel
+                        for theme in extracted_themes:
+                            append_to_excel(
+                                file_name,
+                                number="",
+                                link=link_url,
+                                title=Combined_Title_And_Date,
+                                date=Converted_Date,
+                                media="",
+                                main_topic="",
+                                sub_topic=theme["主题"],
+                                question="",
+                                speaker=theme["发言人"],
+                                answer=theme["回答"]
+                            )
+
+                        # 分割并解析 Q&A 内容
+                        conversation_segments = split_conversation_segments(q_and_a_text)
+                        parsed_conversations = parse_conversation_details(conversation_segments)
+
+                        # 保存 Q&A 对话到 Excel
+                        for conversation in parsed_conversations:
+                            append_to_excel(
+                                file_name,
+                                number="",
+                                link=link_url,
+                                title=Combined_Title_And_Date,
+                                date=Converted_Date,
+                                media=conversation["媒体"],
+                                main_topic="",
+                                sub_topic=conversation["主题"],
+                                question=conversation["提问"],
+                                speaker=conversation["发言人"],
+                                answer=conversation["回答"]
+                            )
+                        # 返回到主页面，准备爬取下一个链接
+                        driver.back()
+
+                        # 等待主页面加载
+                        time.sleep(3)
+
+                    except Exception as e:
+                        print(f"Error processing dl[{dl_index}]: {e}")
+                        break  # 如果某个链接无法访问，则跳出循环
+                driver.get(url)
 
 
 
-        except Exception as e:
-            print(f"Error processing link {i - 1}: {e}")
+            except Exception as e:
+                print(f"Error processing link {i - 1}: {e}")
 
 finally:
     # 关闭浏览器
